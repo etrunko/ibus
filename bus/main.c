@@ -35,6 +35,7 @@
 #include "global.h"
 #include "ibusimpl.h"
 #include "server.h"
+#include "waylandproxy.h"
 
 static gboolean daemonize = FALSE;
 static gboolean single = FALSE;
@@ -273,6 +274,8 @@ main (gint argc, gchar **argv)
         if (!execute_cmdline (LIBEXECDIR "/ibus-x11 --kill-daemon"))
             exit (-1);
     }
+
+    bus_wayland_support_run ();
 
     bus_server_run ();
     return 0;

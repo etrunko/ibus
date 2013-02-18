@@ -87,6 +87,9 @@ struct _BusInputContext {
     /* is fake context */
     gboolean fake;
 
+    /* Wayland support */
+    BusWaylandProxy *wayland_proxy;
+
     /* incompleted set engine by desc request */
     SetEngineByDescData *data;
 };
@@ -971,13 +974,10 @@ _ic_set_surrounding_text (BusInputContext       *context,
     text = IBUS_TEXT (ibus_serializable_deserialize (variant));
     g_variant_unref (variant);
 
-    if ((context->capabilities & IBUS_CAP_SURROUNDING_TEXT) &&
-         context->has_focus && context->engine) {
-        bus_engine_proxy_set_surrounding_text (context->engine,
-                                               text,
-                                               cursor_pos,
-                                               anchor_pos);
-    }
+    bus_input_context_set_surrounding_text (context,
+                                            text,
+                                            cursor_pos,
+                                            anchor_pos);
 
     if (g_object_is_floating (text))
         g_object_unref (text);
@@ -1198,6 +1198,13 @@ bus_input_context_commit_text (BusInputContext *context,
     if (text == text_empty || text == NULL)
         return;
 
+    if (context->wayland_proxy != NULL)
+    {
+            bus_wayland_proxy_commit_text (context->wayland_proxy, text);
+
+            return;
+    }
+
     GVariant *variant = ibus_serializable_serialize ((IBusSerializable *)text);
     bus_input_context_emit_signal (context,
                                    "CommitText",
@@ -1228,6 +1235,12 @@ bus_input_context_update_preedit_text (BusInputContext *context,
     context->preedit_visible = visible;
     context->preedit_mode = mode;
 
+    if (context->wayland_proxy) {
+        bus_wayland_proxy_update_preedit_text (context->wayland_proxy,
+                                               context->preedit_text,
+                                               context->preedit_cursor_pos,
+                                               context->preedit_visible);
+    }
     if (PREEDIT_CONDITION) {
         GVariant *variant = ibus_serializable_serialize ((IBusSerializable *)context->preedit_text);
         bus_input_context_emit_signal (context,
@@ -2327,4 +2340,89 @@ bus_input_context_get_client (BusInputContext *context)
 {
     g_assert (BUS_IS_INPUT_CONTEXT (context));
     return context->client;
+}
+
+void
+bus_input_context_set_wayland_proxy (BusInputContext  *context,
+                                     BusWaylandProxy  *proxy)
+{
+    g_assert (BUS_IS_INPUT_CONTEXT (context));
+
+    context->wayland_proxy = proxy; 
+}
+
+static void
+_ic_wayland_process_key_event_reply_cb (GObject               *source,
+                                        GAsyncResult          *res,
+                                        BusWaylandKeyEvent    *event)
+{
+    GError *error = NULL;
+    gboolean processed = FALSE;
+
+    GVariant *value = g_dbus_proxy_call_finish ((GDBusProxy *)source,
+                                                 res,
+                                                 &error);
+    if (value != NULL) {
+        g_variant_get (value, "(b)", &processed);
+        g_variant_unref (value);
+        bus_wayland_key_event_processed (event, processed);
+    }
+    else {
+        bus_wayland_key_event_error (event, error);
+        g_error_free (error);
+    }
+}
+
+void
+bus_input_context_process_wayland_key_event (BusInputContext    *context,
+                                             guint               keyval,
+                                             guint               keycode,
+                                             guint               modifiers,
+                                             BusWaylandKeyEvent *event)
+{
+    if (G_UNLIKELY (!context->has_focus)) {
+        /* workaround: set focus if context does not have focus */
+        BusInputContext *focused_context = bus_ibus_impl_get_focused_input_context (BUS_DEFAULT_IBUS);
+        if (focused_context == NULL ||
+            focused_context->fake == TRUE ||
+            context->fake == FALSE) {
+            /* grab focus, if context is a real IC or current focused IC is fake */
+            bus_input_context_focus_in (context);
+        }
+    }
+
+    /* ignore key events, if it is a fake input context */
+    if (context->has_focus && context->engine && context->fake == FALSE) {
+        bus_engine_proxy_process_key_event (context->engine,
+                                            keyval,
+                                            keycode,
+                                            modifiers,
+                                            (GAsyncReadyCallback) _ic_wayland_process_key_event_reply_cb,
+                                            event);
+    } else {
+        bus_wayland_key_event_processed (event, FALSE);
+    }
+}
+
+void
+bus_input_context_set_surrounding_text (BusInputContext *context,
+                                        IBusText        *text,
+                                        guint            cursor_pos,
+                                        guint            anchor_pos)
+{
+    if ((context->capabilities & IBUS_CAP_SURROUNDING_TEXT) &&
+         context->has_focus && context->engine) {
+        bus_engine_proxy_set_surrounding_text (context->engine,
+                                               text,
+                                               cursor_pos,
+                                               anchor_pos);
+    }
+}
+
+void
+bus_input_context_reset (BusInputContext *context)
+{
+    if (context->engine) {
+        bus_engine_proxy_reset (context->engine);
+    }
 }

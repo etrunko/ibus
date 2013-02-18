@@ -78,6 +78,28 @@ commonsrc = \
 	types.h \
 	$(NULL)
 
+if ENABLE_WAYLAND
+AM_CFLAGS += \
+	@WAYLAND_CFLAGS@ \
+	$(NULL)
+
+AM_LDADD += \
+	@WAYLAND_LIBS@ \
+	$(NULL)
+
+commonsrc += \
+	waylandeventsource.c \
+	waylandeventsource.h \
+	waylandproxy.c \
+	waylandproxy.h \
+	input-method-protocol.c \
+	input-method-client-protocol.h \
+	$(NULL)
+
+include $(top_srcdir)/m4/wayland-scanner.mk
+
+endif
+
 bin_PROGRAMS = ibus-daemon
 ibus_daemon_DEPENDENCIES = \
 	$(libibus) \
@@ -97,6 +119,13 @@ BUILT_SOURCES =             \
 	marshalers.h            \
 	marshalers.c            \
 	$(NULL)
+
+if ENABLE_WAYLAND
+BUILT_SOURCES +=			\
+	input-method-protocol.c	\
+	input-method-client-protocol.h	\
+	$(NULL)
+endif
 
 # gen marshal
 marshalers.h: marshalers.list

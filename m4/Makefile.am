@@ -23,6 +23,8 @@
 EXTRA_DIST = \
     as-version.m4 \
     vapigen.m4 \
+	wayland-scanner.m4 \
+	wayland-scanner.mk \
     $(NULL)
 
 GITIGNOREFILES = \

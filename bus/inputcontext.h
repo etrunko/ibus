@@ -26,6 +26,7 @@
 
 #include "connection.h"
 #include "factoryproxy.h"
+#include "waylandproxy.h"
 
 /*
  * Type macros.
@@ -207,6 +208,22 @@ void                 bus_input_context_set_capabilities (BusInputContext    *con
  * @returns: context->client.
  */
 const gchar         *bus_input_context_get_client       (BusInputContext    *context);
+
+
+void                 bus_input_context_set_wayland_proxy (BusInputContext  *context,
+                                                          BusWaylandProxy  *proxy);
+
+void                 bus_input_context_process_wayland_key_event (BusInputContext       *context,
+                                                                  guint                  keyval,
+                                                                  guint                  keycode,
+                                                                  guint                  modifiers,
+                                                                  BusWaylandKeyEvent    *event);
+
+void                 bus_input_context_set_surrounding_text (BusInputContext *context,
+                                                             IBusText        *text,
+                                                             guint            cursor_pos,
+                                                             guint            anchor_pos);
+void                 bus_input_context_reset                (BusInputContext *context);
 
 G_END_DECLS
 #endif

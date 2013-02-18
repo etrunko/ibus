@@ -82,5 +82,8 @@ gboolean         bus_ibus_impl_is_embed_preedit_text
 BusInputContext *bus_ibus_impl_get_focused_input_context
                                                     (BusIBusImpl        *ibus);
 
+BusInputContext *bus_ibus_impl_create_wayland_input_context
+                                                    (BusIBusImpl        *ibus);
+
 G_END_DECLS
 #endif

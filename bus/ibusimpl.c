@@ -1437,3 +1437,15 @@ bus_ibus_impl_get_focused_input_context (BusIBusImpl *ibus)
 
     return ibus->focused_context;
 }
+
+BusInputContext *
+bus_ibus_impl_create_wayland_input_context (BusIBusImpl *ibus)
+{
+    g_assert (BUS_IS_IBUS_IMPL (ibus));
+
+    BusInputContext *context = bus_ibus_impl_create_input_context (ibus,
+                                                                   NULL,
+                                                                   "wayland");
+
+    return context;
+}
