@@ -550,6 +550,8 @@ ibus/Makefile
 ibus/interface/Makefile
 ui/Makefile
 ui/gtk3/Makefile
+ui/wayland/Makefile
+ui/wayland/gtkpanel.xml.in
 setup/Makefile
 setup/ibus-setup
 bindings/Makefile
