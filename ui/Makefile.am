@@ -20,8 +20,12 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 # Boston, MA  02111-1307  USA
 
+if ENABLE_WAYLAND
+GTK3_UI = wayland
+else
 if ENABLE_GTK3
 GTK3_UI = gtk3
+endif
 endif
 
 SUBDIRS = \
