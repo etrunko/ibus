@@ -491,6 +491,9 @@ bus_wayland_support_run (void)
 	struct wl_registry *registry;
 
 	display = wl_display_connect (NULL);
+	if (display == NULL)
+		return;
+
 	registry = wl_display_get_registry (display);
 	wl_registry_add_listener(registry, &registry_listener, NULL);
 
