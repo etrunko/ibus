@@ -284,11 +284,11 @@ input_method_keyboard_key (void *data,
                                                    code,
                                                    modifiers);
     if (!retval) {
-        _context_forward_key_event_cb (ibus_im->ibuscontext,
-                                       sym,
-                                       code,
-                                       modifiers,
-                                       ibus_im);
+        wl_input_method_context_key (ibus_im->context,
+                                     serial,
+                                     time,
+                                     key,
+                                     state);
     }
 }
 
